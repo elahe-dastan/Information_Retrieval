@@ -5,3 +5,5 @@ can change it later
 
 # Make invertible index
 ####  prepare documents
+
+# the memory is 160 bytes
