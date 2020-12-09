@@ -7,14 +7,19 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
 
 type TermDoc struct {
 	term string // 16 byte
-	doc  int // 8 byte
+	doc  int    // 8 byte
 }
+
+var m map[string]int
+
+const stopWordCount = 4
 
 // our memory can keep only 240 bytes
 //var termDocs [10]TermDoc
@@ -43,6 +48,7 @@ func doc(name string) {
 	}
 
 	block := 0
+	m = make(map[string]int)
 	for {
 		// read 160 bytes
 		mem := make([]byte, 160)
@@ -60,6 +66,7 @@ func doc(name string) {
 		var termDocs []TermDoc
 		stringInMemory := ""
 		for _, token := range tokens {
+			m[token]++
 			idInt, _ := strconv.Atoi(id)
 			termDocs = append(termDocs, TermDoc{
 				term: token,
@@ -77,13 +84,26 @@ func doc(name string) {
 			fmt.Println(err)
 		}
 
-		o, err := os.OpenFile(dir,os.O_WRONLY|os.O_CREATE, os.ModeAppend)
+		o, err := os.OpenFile(dir, os.O_WRONLY|os.O_CREATE, os.ModeAppend)
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		previous := TermDoc{
+			term: "",
+			doc:  0,
+		}
 		for i := range sortedBlock {
 			sb := sortedBlock[i]
+			if sb == previous {
+				continue
+			}
+
+			if sb.term == previous.term {
+				sortedStringInMemory += "," + strconv.Itoa(sb.doc)
+				continue
+			}
+
 			sortedStringInMemory += strconv.Itoa(sb.doc)
 			sortedStringInMemory += sb.term
 		}
@@ -110,6 +130,9 @@ func doc(name string) {
 		//}
 		block++
 	}
+
+	stopWords := stopWord()
+	merge
 }
 
 func BlockSort(termDocs []TermDoc) []TermDoc {
@@ -139,3 +162,30 @@ func BlockSort(termDocs []TermDoc) []TermDoc {
 
 }
 
+func stopWord() []string {
+	pl := make(PairList, len(m))
+	i := 0
+	for k, v := range m {
+		pl[i] = Pair{k, v}
+		i++
+	}
+	sort.Sort(sort.Reverse(pl))
+
+	stopWords := make([]string, stopWordCount)
+	for i := 0; i < stopWordCount; i++ {
+		stopWords[i] = pl[i].Key
+	}
+
+	return stopWords
+}
+
+type Pair struct {
+	Key   string
+	Value int
+}
+
+type PairList []Pair
+
+func (p PairList) Len() int           { return len(p) }
+func (p PairList) Less(i, j int) bool { return p[i].Value < p[j].Value }
+func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
