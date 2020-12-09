@@ -64,7 +64,6 @@ func doc(name string) {
 		s := string(mem[:n])
 		tokens := strings.Fields(s)
 		var termDocs []TermDoc
-		stringInMemory := ""
 		for _, token := range tokens {
 			m[token]++
 			idInt, _ := strconv.Atoi(id)
@@ -72,8 +71,6 @@ func doc(name string) {
 				term: token,
 				doc:  idInt,
 			})
-			termDoc := token + " " + id + "\n"
-			stringInMemory += termDoc
 		}
 
 		sortedBlock := BlockSort(termDocs)
@@ -104,11 +101,14 @@ func doc(name string) {
 				continue
 			}
 
-			sortedStringInMemory += strconv.Itoa(sb.doc)
-			sortedStringInMemory += sb.term
+			if previous.term != "" {
+				sortedStringInMemory += "\n"
+			}
+			sortedStringInMemory += strconv.Itoa(sb.doc) + " " + sb.term
+			previous = sb
 		}
 
-		_, err = o.WriteString(stringInMemory)
+		_, err = o.WriteString(sortedStringInMemory)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -131,8 +131,8 @@ func doc(name string) {
 		block++
 	}
 
-	stopWords := stopWord()
-	merge
+	//stopWords := stopWord()
+	//merge
 }
 
 func BlockSort(termDocs []TermDoc) []TermDoc {
