@@ -260,17 +260,46 @@ func merge() {
 				scanner.Split(bufio.ScanLines)
 				filePointers[i] = scanner
 			}
+
+			for i := 0; i < size; i++ {
+				s := filePointers[i]
+
+				l := strings.Split(s.Text(), "")
+				postingList := make([]int, 0)
+				postings := strings.Split(l[1], ",")
+				for j := 0; j < len(postings); j++ {
+					posting, err := strconv.Atoi(postings[j])
+					if err != nil {
+						log.Fatal()
+					}
+
+					postingList = append(postingList, posting)
+				}
+
+				termPostingLists[i] = Head{
+					Pointer: s,
+					Term: TermPostingList{
+						term:        l[0],
+						postingList: postingList,
+					},
+				}
+
+			}
+
+			sort.Sort(sort.Reverse(termPostingLists))
+
 			// 10 files
 			for {
 				// how to move pointer forward
-				for i := 0; i < size; i++ {
-					s := filePointers[i]
+				firstTerm := termPostingLists[0].Term.term
+				firstPostingList := termPostingLists[0].Term.postingList
 
-					if !s.Scan() {
-						break
-					}
+				firstPointer := termPostingLists[0].Pointer
 
-					l := strings.Split(s.Text(), "")
+				if !firstPointer.Scan() {
+					termPostingLists = termPostingLists[1:]
+				}else {
+					l := strings.Split(firstPointer.Text(), "")
 					postingList := make([]int, 0)
 					postings := strings.Split(l[1], ",")
 					for j := 0; j < len(postings); j++ {
@@ -282,26 +311,21 @@ func merge() {
 						postingList = append(postingList, posting)
 					}
 
-					termPostingLists[i] = PairArray{
-						Key:   l[0],
-						Value: postingList,
+					termPostingLists[0] = Head {
+						Pointer: firstPointer,
+						Term:    TermPostingList{
+							term:        l[0],
+							postingList: postingList,
+						},
 					}
-
 				}
 
-				sort.Sort(sort.Reverse(termPostingLists))
-
-				firstTerm := termPostingLists[0].Key
-				firstPostingList := termPostingLists[0].Value
-
 				for i := 1; i < size; i++ {
-					if termPostingLists[i].Key != firstTerm {
+					if termPostingLists[i].Term.term != firstTerm {
 						break
 					}
 
-					for j := 0; i < len(termPostingLists[i].Value); j++ {
-						firstPostingList = append(firstPostingList, termPostingLists[i].Value[j])
-					}
+					firstPostingList = append(firstPostingList, termPostingLists[i].Term.postingList...)
 				}
 
 				sort.Ints(firstPostingList)
@@ -349,13 +373,13 @@ func (p PairList) Len() int           { return len(p) }
 func (p PairList) Less(i, j int) bool { return p[i].Key < p[j].Key }
 func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-type PairArray struct {
-	Key   string
-	Value []int
+type Head struct {
+	Pointer *bufio.Scanner
+	Term    TermPostingList
 }
 
-type PairArrayList []PairArray
+type PairArrayList []Head
 
 func (p PairArrayList) Len() int           { return len(p) }
-func (p PairArrayList) Less(i, j int) bool { return p[i].Key < p[j].Key }
+func (p PairArrayList) Less(i, j int) bool { return p[i].Term.term < p[j].Term.term }
 func (p PairArrayList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
