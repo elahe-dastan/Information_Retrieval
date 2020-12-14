@@ -27,31 +27,12 @@ var m map[string]int
 
 const stopWordCount = 4
 
-// our memory can keep only 240 bytes
 //var termDocs [10]TermDoc
 
-func AllDocs() {
 
-	docs, err := ioutil.ReadDir("./docs")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, d := range docs {
-		// open each doc and tokenize
-		doc(d.Name())
-	}
-}
-
-// Yes, I know we have few small docs but our logic should work for huge ones too so to stimulate the situation we think
-// our memory is too small
+//Yes, I know we have few small docs but our logic should work for huge ones too so to stimulate the situation we think
+//our memory is too small
 func doc(name string) {
-	id := strings.Split(name, ".")[0]
-
-	f, err := os.Open("./docs/" + name)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	block := 0
 	m = make(map[string]int)
