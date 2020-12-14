@@ -1,7 +1,8 @@
 package main
 
-import "Information_Retrieval/tokenize"
+import "Information_Retrieval/index"
 
 func main() {
-	tokenize.AllDocs()
+	index.Construct("./docs")
+	//tokenize.AllDocs()
 }

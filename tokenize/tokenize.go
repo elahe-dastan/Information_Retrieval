@@ -31,7 +31,7 @@ const stopWordCount = 4
 //var termDocs [10]TermDoc
 
 func AllDocs() {
-	// go through docs in a specified directory
+
 	docs, err := ioutil.ReadDir("./docs")
 	if err != nil {
 		log.Fatal(err)
