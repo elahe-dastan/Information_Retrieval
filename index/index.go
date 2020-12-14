@@ -1,6 +1,7 @@
 package index
 
 import (
+	"Information_Retrieval/bsbi"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,10 +10,11 @@ import (
 type index struct {
 	collectionDir string
 	docId         int
+	sortAlgorithm *bsbi.Bsbi
 }
 
 func NewIndex(collectionDir string) *index {
-	return &index{collectionDir: collectionDir, docId: 0}
+	return &index{collectionDir: collectionDir, docId: 0, sortAlgorithm: bsbi.NewBsbi()}
 }
 
 // dir is document collection directory
@@ -36,5 +38,5 @@ func (i *index) construct(docName string) {
 		log.Fatal(err)
 	}
 
-
+	i.sortAlgorithm.Block()
 }
