@@ -2,6 +2,8 @@ package index
 
 import (
 	"Information_Retrieval/bsbi"
+	"Information_Retrieval/tokenize"
+	"bufio"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,12 +11,13 @@ import (
 
 type index struct {
 	collectionDir string
+	memorySize    int
 	docId         int
 	sortAlgorithm *bsbi.Bsbi
 }
 
-func NewIndex(collectionDir string) *index {
-	return &index{collectionDir: collectionDir, docId: 0, sortAlgorithm: bsbi.NewBsbi()}
+func NewIndex(collectionDir string, memorySize int) *index {
+	return &index{collectionDir: collectionDir, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi()}
 }
 
 // dir is document collection directory
@@ -33,10 +36,43 @@ func (i *index) Construct() {
 func (i *index) construct(docName string) {
 	i.docId++
 
-	f, err := os.Open(i.collectionDir + "/" + docName)
+	docDir := i.collectionDir + "/" + docName
+
+	f, err := os.Open(docDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	i.sortAlgorithm.Block()
+	defer f.Close()
+
+	i.tokenizeSortBlock(f)
+}
+
+func (i *index) tokenizeSortBlock(f *os.File) {
+	memIndex := 0
+	scanner := bufio.NewScanner(f)
+	scanner.Split(bufio.ScanWords)
+	termDocs := make([]tokenize.TermDoc, i.memorySize)
+	for scanner.Scan() {
+		term := scanner.Text()
+		termDocs[memIndex] = tokenize.TermDoc{
+			Term: term,
+			Doc:  i.docId,
+		}
+
+		memIndex++
+		if memIndex == i.memorySize {
+			i.sortAlgorithm.Block()
+			termDocs = make([]tokenize.TermDoc, i.memorySize)
+			memIndex = 0
+		}
+	}
+
+	if len(termDocs) > 0 {
+		i.sortAlgorithm.Block()
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
 }
