@@ -17,7 +17,7 @@ type index struct {
 }
 
 func NewIndex(collectionDir string, memorySize int) *index {
-	return &index{collectionDir: collectionDir, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi("./blocks/")}
+	return &index{collectionDir: collectionDir, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi("./blocks/",memorySize, 10)}
 }
 
 // dir is document collection directory
@@ -46,6 +46,7 @@ func (i *index) construct(docName string) {
 	defer f.Close()
 
 	i.tokenizeSortBlock(f)
+	i.sortAlgorithm.Merge()
 }
 
 func (i *index) tokenizeSortBlock(f *os.File) {
