@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"os"
 	"sort"
 	"strconv"
@@ -35,32 +34,7 @@ func doc(name string) {
 	merge()
 }
 
-func BlockSort(termDocs []TermDoc) []TermDoc {
-	if len(termDocs) < 2 {
-		return termDocs
-	}
 
-	left, right := 0, len(termDocs)-1
-
-	pivot := rand.Int() % len(termDocs)
-
-	termDocs[pivot], termDocs[right] = termDocs[right], termDocs[pivot]
-
-	for i, _ := range termDocs {
-		if termDocs[i].term < termDocs[right].term {
-			termDocs[left], termDocs[i] = termDocs[i], termDocs[left]
-			left++
-		}
-	}
-
-	termDocs[left], termDocs[right] = termDocs[right], termDocs[left]
-
-	BlockSort(termDocs[:left])
-	BlockSort(termDocs[left+1:])
-
-	return termDocs
-
-}
 
 func stopWord() []string {
 	pl := make(PairList, len(m))
