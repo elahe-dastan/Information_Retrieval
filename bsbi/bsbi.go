@@ -190,8 +190,12 @@ func (b *Bsbi) moveFinger() {
 
 			firstPostingList = append(firstPostingList, b.fingers[i].TermPostingList.PostingList...)
 			sort.Strings(firstPostingList)
-			termPostingList := tokenize.Unmarshal(b.fingers[i].FileSeek.Text())
-			b.fingers[i].TermPostingList = termPostingList
+			if b.fingers[i].FileSeek.Scan(){
+				termPostingList := tokenize.Unmarshal(b.fingers[i].FileSeek.Text())
+				b.fingers[i].TermPostingList = termPostingList
+			}else {
+				b.fingers = append(b.fingers[:i], b.fingers[i+1:]...)
+			}
 		}
 
 		b.outputBuffer[count] = tokenize.TermPostingList{
