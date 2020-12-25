@@ -176,10 +176,10 @@ func (b *Bsbi) moveFinger() {
 		firstFinger := b.fingers[0].FileSeek
 
 		if !firstFinger.Scan() {
+			// index ha ro b ga midi
 			b.fingers = b.fingers[1:]
 		} else {
 			termPostingList := tokenize.Unmarshal(firstFinger.Text())
-
 			b.fingers[0].TermPostingList = termPostingList
 		}
 
@@ -194,6 +194,7 @@ func (b *Bsbi) moveFinger() {
 				termPostingList := tokenize.Unmarshal(b.fingers[i].FileSeek.Text())
 				b.fingers[i].TermPostingList = termPostingList
 			}else {
+				// index ha ro darin b ga midi
 				b.fingers = append(b.fingers[:i], b.fingers[i+1:]...)
 			}
 		}
