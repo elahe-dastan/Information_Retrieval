@@ -108,7 +108,7 @@ func (b *Bsbi) Merge() {
 	}
 
 	for {
-		if len(blocks) == 0 {
+		if len(blocks) == 1 {
 			return
 		}
 
