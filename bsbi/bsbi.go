@@ -9,7 +9,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 type Bsbi struct {
@@ -18,6 +17,9 @@ type Bsbi struct {
 	outPutBuffSize int
 	blockNum       int
 	mergeRun       int
+	fingers        tokenize.Fingers
+	outputBuffer   []tokenize.TermPostingList
+	block          int
 }
 
 func NewBsbi(blockDir string, openFilesNum int, outPutBuffSize int) *Bsbi {
@@ -26,7 +28,7 @@ func NewBsbi(blockDir string, openFilesNum int, outPutBuffSize int) *Bsbi {
 		log.Fatal(err)
 	}
 
-	return &Bsbi{blockDir: blockDir, openFileNum: openFilesNum, outPutBuffSize: outPutBuffSize, blockNum: 0, mergeRun: 0}
+	return &Bsbi{blockDir: blockDir, openFileNum: openFilesNum, outPutBuffSize: outPutBuffSize, blockNum: 0, mergeRun: 0, outputBuffer: make([]tokenize.TermPostingList, outPutBuffSize), block: 0}
 }
 
 func (b *Bsbi) WriteBlock(termDocs []tokenize.TermDoc) {
@@ -101,26 +103,21 @@ func sortBlock(termDocs []tokenize.TermDoc) []tokenize.TermDoc {
 
 func (b *Bsbi) Merge() {
 	mergeRun := 0
-	for {
-		// all blocks
-		blocks, err := ioutil.ReadDir(b.blockDir + strconv.Itoa(mergeRun))
-		if err != nil {
-			log.Fatal(err)
-		}
+	// all blocks
+	blocks, err := ioutil.ReadDir(b.blockDir + strconv.Itoa(mergeRun))
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	for {
 		mergeRun++
 
-		if len(blocks) < b.openFileNum {
-			lastMerge()
-			break
-		}
-
-		b.middleMerge(blocks)
+		b.middleMerge(blocks[:b.openFileNum])
+		blocks = blocks[b.openFileNum:]
 	}
 }
 
 func (b *Bsbi) middleMerge(blocks []os.FileInfo) {
-	block := 0
 	blockNames := make([]string, len(blocks))
 
 	for i, b := range blocks {
@@ -133,7 +130,7 @@ func (b *Bsbi) middleMerge(blocks []os.FileInfo) {
 	filePointers := make([]*bufio.Scanner, b.openFileNum)
 	for i := 0; i < b.openFileNum; i++ {
 		f, err := os.Open(b.blockDir + blockNames[i]) // it may need a / in between
-		defer f.Close()
+		//defer f.Close()
 
 		if err != nil {
 			log.Fatal(err)
@@ -144,119 +141,81 @@ func (b *Bsbi) middleMerge(blocks []os.FileInfo) {
 		filePointers[i] = scanner
 	}
 
-	outputBuffer := make([]tokenize.TermPostingList, b.outPutBuffSize)
-	outputDir := b.blockDir + strconv.Itoa(b.mergeRun)
-	err := os.Mkdir(outputDir, 0700)
-	if err != nil && !os.IsExist(err){
-		log.Fatal(err)
-	}
-
-	//output file
-	o, err := os.OpenFile(outputDir + strconv.Itoa(block) + ".txt", os.O_WRONLY|os.O_CREATE, os.ModeAppend)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	termPostingLists := make(PairArrayList, b.openFileNum)
-
-	residual := 160
+	b.fingers = make(tokenize.Fingers, b.openFileNum)
 
 	for i := 0; i < b.openFileNum; i++ {
 		s := filePointers[i]
+		termPostingList := tokenize.Unmarshal(s.Text())
 
-		// write marshal unmarshal for it
-		l := strings.Split(s.Text(), "")
-		postingList := make([]int, 0)
-		postings := strings.Split(l[1], ",")
-		for j := 0; j < len(postings); j++ {
-			posting, err := strconv.Atoi(postings[j])
-			if err != nil {
-				log.Fatal()
-			}
-
-			postingList = append(postingList, posting)
+		b.fingers[i] = tokenize.Finger{
+			FileSeek:        s,
+			TermPostingList: termPostingList,
 		}
-
-		termPostingLists[i] = Head{
-			Pointer: s,
-			Term: TermPostingList{
-				term:        l[0],
-				postingList: postingList,
-			},
-		}
-
 	}
 
-	sort.Sort(sort.Reverse(termPostingLists))
+	sort.Sort(sort.Reverse(b.fingers))
 
+}
+
+func (b *Bsbi) moveFinger() {
+	count := 0
 	// 10 files
 	for {
+		if len(b.fingers) == 0 {
+			break
+		}
 		// how to move pointer forward
-		firstTerm := termPostingLists[0].Term.term
-		firstPostingList := termPostingLists[0].Term.postingList
+		firstTerm := b.fingers[0].TermPostingList.Term
+		firstPostingList := b.fingers[0].TermPostingList.PostingList
+		firstFinger := b.fingers[0].FileSeek
 
-		firstPointer := termPostingLists[0].Pointer
-
-		if !firstPointer.Scan() {
-			termPostingLists = termPostingLists[1:]
+		if !firstFinger.Scan() {
+			b.fingers = b.fingers[1:]
 		} else {
-			l := strings.Split(firstPointer.Text(), "")
-			postingList := make([]int, 0)
-			postings := strings.Split(l[1], ",")
-			for j := 0; j < len(postings); j++ {
-				posting, err := strconv.Atoi(postings[j])
-				if err != nil {
-					log.Fatal()
-				}
+			termPostingList := tokenize.Unmarshal(firstFinger.Text())
 
-				postingList = append(postingList, posting)
-			}
-
-			termPostingLists[0] = Head{
-				Pointer: firstPointer,
-				Term: TermPostingList{
-					term:        l[0],
-					postingList: postingList,
-				},
-			}
+			b.fingers[0].TermPostingList = termPostingList
 		}
 
-		for i := 1; i < size; i++ {
-			if termPostingLists[i].Term.term != firstTerm {
-				break
+		for i := 1; i < b.openFileNum; i++ {
+			if b.fingers[i].TermPostingList.Term != firstTerm {
+				continue
 			}
 
-			firstPostingList = append(firstPostingList, termPostingLists[i].Term.postingList...)
+			firstPostingList = append(firstPostingList, b.fingers[i].TermPostingList.PostingList...)
+			sort.Strings(firstPostingList)
+			termPostingList := tokenize.Unmarshal(b.fingers[i].FileSeek.Text())
+			b.fingers[i].TermPostingList = termPostingList
 		}
 
-		sort.Ints(firstPostingList)
-		firstPostingListStr := make([]string, len(firstPostingList))
-		for k := 0; k < len(firstPostingList); k++ {
-			firstPostingListStr = append(firstPostingListStr, strconv.Itoa(firstPostingList[k]))
+		b.outputBuffer[count] = tokenize.TermPostingList{
+			Term:        firstTerm,
+			PostingList: firstPostingList,
 		}
-
-		out := firstTerm + " " + strings.Join(firstPostingListStr, ",")
-
-		outBytes := []byte(out)
-
-		if len(outBytes) < residual {
-			outputBuffer = append(outputBuffer, outBytes...)
-			residual -= len(outBytes)
-		} else {
-			outputBuffer = append(outputBuffer, outBytes[:residual]...)
-			_, err := o.Write(outputBuffer)
-			if err != nil {
-				log.Fatal(err)
-			}
-			outBytes = outBytes[residual:]
-
-			_, err = o.Write(outputBuffer)
-			if err != nil {
-				log.Fatal(err)
-			}
-
+		count++
+		if count == b.outPutBuffSize {
+			count = 0
+			b.middleMergeWrite()
 		}
 	}
 }
 
+func (b *Bsbi) middleMergeWrite() {
+	outputDir := b.blockDir + strconv.Itoa(b.mergeRun)
+	err := os.Mkdir(outputDir, 0700)
+	if err != nil && !os.IsExist(err) {
+		log.Fatal(err)
+	}
+	//output file
+	o, err := os.OpenFile(outputDir+strconv.Itoa(b.block)+".txt", os.O_WRONLY|os.O_CREATE, os.ModeAppend)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = o.WriteString(tokenize.Marshal(b.outputBuffer))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	b.block++
 }
