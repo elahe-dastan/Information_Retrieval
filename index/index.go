@@ -31,6 +31,8 @@ func (i *index) Construct() {
 	for _, d := range docs {
 		i.construct(d.Name())
 	}
+
+	i.sortAlgorithm.Merge()
 }
 
 // construct index for one document
@@ -47,7 +49,6 @@ func (i *index) construct(docName string) {
 	defer f.Close()
 
 	i.tokenizeSortBlock(f)
-	i.sortAlgorithm.Merge()
 }
 
 func (i *index) tokenizeSortBlock(f *os.File) {

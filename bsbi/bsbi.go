@@ -158,7 +158,7 @@ func (b *Bsbi) middleMerge(blocks []os.FileInfo) {
 		}
 	}
 
-	sort.Sort(sort.Reverse(b.fingers))
+	sort.Sort(b.fingers)
 
 	b.moveFinger()
 }
@@ -214,7 +214,7 @@ func (b *Bsbi) middleMergeWrite() {
 	}
 	//output file
 	filePath := outputDir + "/" + strconv.Itoa(b.block)+".txt"
-	o, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, os.ModeAppend)
+	o, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
