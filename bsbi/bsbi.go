@@ -117,10 +117,12 @@ func (b *Bsbi) Merge() {
 			b.mergeRun++
 			b.block = 0
 			b.Merge()
+		}else {
+			b.middleMerge(blocks[:b.openFileNum])
+			blocks = blocks[b.openFileNum:]
 		}
 
-		b.middleMerge(blocks[:b.openFileNum])
-		blocks = blocks[b.openFileNum:]
+		return
 	}
 }
 
@@ -136,7 +138,6 @@ func (b *Bsbi) middleMerge(blocks []os.FileInfo) {
 	for i := 0; i < len(blockNames); i++ {
 		f, err := os.Open(b.blockDir + strconv.Itoa(b.mergeRun) + "/" + blockNames[i])
 		//defer f.Close()
-
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -203,6 +204,7 @@ func (b *Bsbi) moveFinger() {
 			count = 0
 			b.middleMergeWrite()
 		}
+		sort.Sort(b.fingers)
 	}
 }
 
