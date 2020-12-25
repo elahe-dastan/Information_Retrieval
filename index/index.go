@@ -2,6 +2,7 @@ package index
 
 import (
 	"Information_Retrieval/bsbi"
+	"Information_Retrieval/normalize"
 	"Information_Retrieval/tokenize"
 	"bufio"
 	"io/ioutil"
@@ -55,18 +56,22 @@ func (i *index) tokenizeSortBlock(f *os.File) {
 	memIndex := 0
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanWords)
-	termPostingList := make([]tokenize.TermPostingList, i.memorySize)
+	termPostingList := make([]tokenize.TermPostingList, 0)
 	for scanner.Scan() {
-		term := scanner.Text()
-		termPostingList[memIndex] = tokenize.TermPostingList{
-			Term:        term,
-			PostingList: []string{strconv.Itoa(i.docId)},
+		word := scanner.Text()
+		terms := normalize.Normalize(word)
+		for _, term := range terms {
+			termPostingList = append(termPostingList, tokenize.TermPostingList{
+				Term:        term,
+				PostingList: []string{strconv.Itoa(i.docId)},
+			})
+
+			memIndex++
 		}
 
-		memIndex++
-		if memIndex == i.memorySize {
+		if memIndex >= i.memorySize {
 			i.sortAlgorithm.WriteBlock(termPostingList)
-			termPostingList = make([]tokenize.TermPostingList, i.memorySize)
+			termPostingList = make([]tokenize.TermPostingList, 0)
 			memIndex = 0
 		}
 	}

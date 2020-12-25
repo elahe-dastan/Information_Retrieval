@@ -117,12 +117,11 @@ func (b *Bsbi) Merge() {
 			b.mergeRun++
 			b.block = 0
 			b.Merge()
+			return
 		}else {
 			b.middleMerge(blocks[:b.openFileNum])
 			blocks = blocks[b.openFileNum:]
 		}
-
-		return
 	}
 }
 
