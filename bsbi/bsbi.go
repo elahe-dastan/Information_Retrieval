@@ -3,6 +3,7 @@ package bsbi
 import (
 	"Information_Retrieval/tokenize"
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -22,8 +23,9 @@ type Bsbi struct {
 	block          int
 }
 
-func NewBsbi(blockDir string, openFilesNum int, outPutBuffSize int) *Bsbi {
-	err := os.Mkdir(blockDir+"0", 0700)
+func NewBsbi(openFilesNum int, outPutBuffSize int) *Bsbi {
+	blockDir := "./blocks0"
+	err := os.Mkdir(blockDir, 0700)
 	if err != nil && !os.IsExist(err) {
 		log.Fatal(err)
 	}
@@ -31,12 +33,12 @@ func NewBsbi(blockDir string, openFilesNum int, outPutBuffSize int) *Bsbi {
 	return &Bsbi{blockDir: blockDir, openFileNum: openFilesNum, outPutBuffSize: outPutBuffSize, blockNum: 0, mergeRun: 0, outputBuffer: make([]tokenize.TermPostingList, outPutBuffSize), block: 0}
 }
 
-func (b *Bsbi) WriteBlock(termDocs []tokenize.TermDoc) {
+func (b *Bsbi) WriteBlock(termDocs []tokenize.TermPostingList) {
 	b.blockNum++
 
 	sortedBlock := sortBlock(termDocs)
 
-	filePath := b.blockDir + strconv.Itoa(b.blockNum) + ".txt"
+	filePath := b.blockDir + "/" + strconv.Itoa(b.blockNum) + ".txt"
 	o, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, os.ModeAppend)
 	if err != nil {
 		log.Fatal(err)
@@ -49,22 +51,23 @@ func (b *Bsbi) WriteBlock(termDocs []tokenize.TermDoc) {
 
 	sortedBlockStr := ""
 
-	var previous tokenize.TermDoc
+	var previous tokenize.TermPostingList
 	for i := range sortedBlock {
 		termDoc := sortedBlock[i]
-		if termDoc == previous {
-			continue
-		}
-
 		if termDoc.Term == previous.Term {
-			sortedBlockStr += "," + strconv.Itoa(termDoc.Doc)
+			fmt.Println(termDoc.Term)
+			fmt.Println(termDoc.PostingList[0])
+			if termDoc.PostingList[0] != previous.PostingList[0] {
+				sortedBlockStr += "," + termDoc.PostingList[0]
+			}
+
 			continue
 		}
 
 		if previous.Term != "" {
 			sortedBlockStr += "\n"
 		}
-		sortedBlockStr += termDoc.Term + " " + strconv.Itoa(termDoc.Doc)
+		sortedBlockStr += termDoc.Term + " " + termDoc.PostingList[0]
 		previous = termDoc
 	}
 
@@ -72,10 +75,9 @@ func (b *Bsbi) WriteBlock(termDocs []tokenize.TermDoc) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }
 
-func sortBlock(termDocs []tokenize.TermDoc) []tokenize.TermDoc {
+func sortBlock(termDocs []tokenize.TermPostingList) []tokenize.TermPostingList {
 	if len(termDocs) < 2 {
 		return termDocs
 	}
@@ -123,10 +125,7 @@ func (b *Bsbi) middleMerge(blocks []os.FileInfo) {
 	for i, b := range blocks {
 		blockNames[i] = b.Name()
 	}
-	//if len(blockNames) < 10 {
-	//	size = len(blockNames)
-	//}
-	//end := start + size
+
 	filePointers := make([]*bufio.Scanner, b.openFileNum)
 	for i := 0; i < b.openFileNum; i++ {
 		f, err := os.Open(b.blockDir + blockNames[i]) // it may need a / in between

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 )
 
 type index struct {
@@ -17,7 +18,7 @@ type index struct {
 }
 
 func NewIndex(collectionDir string, memorySize int) *index {
-	return &index{collectionDir: collectionDir, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi("./blocks/",memorySize, 10)}
+	return &index{collectionDir: collectionDir, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi(memorySize, 10)}
 }
 
 // dir is document collection directory
@@ -53,24 +54,34 @@ func (i *index) tokenizeSortBlock(f *os.File) {
 	memIndex := 0
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanWords)
-	termDocs := make([]tokenize.TermDoc, i.memorySize)
+	termPostingList := make([]tokenize.TermPostingList, i.memorySize)
 	for scanner.Scan() {
 		term := scanner.Text()
-		termDocs[memIndex] = tokenize.TermDoc{
-			Term: term,
-			Doc:  i.docId,
+		termPostingList[memIndex] = tokenize.TermPostingList{
+			Term:        term,
+			PostingList: []string{strconv.Itoa(i.docId)},
 		}
 
 		memIndex++
 		if memIndex == i.memorySize {
-			i.sortAlgorithm.WriteBlock(termDocs)
-			termDocs = make([]tokenize.TermDoc, i.memorySize)
+			i.sortAlgorithm.WriteBlock(termPostingList)
+			termPostingList = make([]tokenize.TermPostingList, i.memorySize)
 			memIndex = 0
 		}
 	}
 
-	if len(termDocs) > 0 {
-		i.sortAlgorithm.WriteBlock(termDocs)
+	// masmali
+	a := make([]tokenize.TermPostingList, 0)
+	for i := range termPostingList {
+		if termPostingList[i].Term == "" {
+			break
+		}
+
+		a = append(a, termPostingList[i])
+	}
+
+	if len(termPostingList) > 0 {
+		i.sortAlgorithm.WriteBlock(a)
 	}
 
 	if err := scanner.Err(); err != nil {

@@ -5,11 +5,6 @@ import (
 	"strings"
 )
 
-type TermDoc struct {
-	Term string
-	Doc  int
-}
-
 type TermPostingList struct {
 	Term        string
 	PostingList []string // always sorted
