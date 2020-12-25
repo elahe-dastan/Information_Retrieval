@@ -24,7 +24,7 @@ func Marshal(list []TermPostingList) string {
 }
 
 func Unmarshal(data string) TermPostingList {
-	termPostingList := strings.Split(data, "")
+	termPostingList := strings.Split(data, " ")
 	//postingList := make([]int, 0)
 	postings := strings.Split(termPostingList[1], ",")
 	//for i := 0; i < len(postings); i++ {
