@@ -18,7 +18,7 @@ type index struct {
 }
 
 func NewIndex(collectionDir string, memorySize int) *index {
-	return &index{collectionDir: collectionDir, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi(memorySize, 10)}
+	return &index{collectionDir: collectionDir, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi(10, memorySize)}
 }
 
 // dir is document collection directory
