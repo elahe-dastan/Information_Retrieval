@@ -175,15 +175,21 @@ func (b *Bsbi) moveFinger() {
 		firstPostingList := b.fingers[0].TermPostingList.PostingList
 		firstFinger := b.fingers[0].FileSeek
 
+		f := false
 		if !firstFinger.Scan() {
 			// index ha ro b ga midi
 			b.fingers = b.fingers[1:]
+			f = true
 		} else {
 			termPostingList := tokenize.Unmarshal(firstFinger.Text())
 			b.fingers[0].TermPostingList = termPostingList
 		}
 
-		for i := 1; i < len(b.fingers); i++ {
+		i := 1
+		if f {
+			i = 0
+		}
+		for ; i < len(b.fingers); i++ {
 			if b.fingers[i].TermPostingList.Term != firstTerm {
 				continue
 			}
@@ -196,6 +202,7 @@ func (b *Bsbi) moveFinger() {
 			}else {
 				// index ha ro darin b ga midi
 				b.fingers = append(b.fingers[:i], b.fingers[i+1:]...)
+				i--
 			}
 		}
 
