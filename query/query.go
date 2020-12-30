@@ -65,6 +65,3 @@ func findDoc(token string) []string {
 	return nil
 }
 
-func cosineSimilarity() {
-
-}

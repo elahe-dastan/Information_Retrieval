@@ -99,3 +99,26 @@ func (v *Vectorizer) calculateTFIDF() {
 		}
 	}
 }
+
+func (v *Vectorizer) Query(query string) {
+	queryVector := v.queryVectorizer(query)
+}
+
+func (v *Vectorizer) queryVectorizer(query string) []float64 {
+	vector := make([]float64, v.termsNum)
+
+	tokens := strings.Split(query, " ")
+	for _, t :=  range tokens{
+		index, ok := v.termIndex[t]
+		if !ok{
+			continue
+		}
+		vector[index]++
+	}
+
+	return vector
+}
+
+func (v *Vectorizer) cosineSimilarity(queryVector []float64) {
+	
+}
