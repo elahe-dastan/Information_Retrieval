@@ -25,6 +25,22 @@ func Query(query string) []string{
 	return ans
 }
 
+func Query2(query string) []string{
+	ans := make([]string, 0)
+	tokens := strings.Split(query, " ")
+
+	for _, token := range tokens {
+		docIds := findDoc(token)
+		if docIds == nil {
+			continue
+		}
+
+		ans = append(ans, docIds...)
+	}
+
+	return ans
+}
+
 // memsize = 6
 func findDoc(token string) []string {
 	filePath := "./blocks2/1.txt"
@@ -47,4 +63,8 @@ func findDoc(token string) []string {
 	}
 
 	return nil
+}
+
+func cosineSimilarity() {
+
 }

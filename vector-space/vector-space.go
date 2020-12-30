@@ -16,6 +16,7 @@ type Vectorizer struct {
 	idf              []float64
 	tf               [][]int
 	tfIdf            [][]float64
+	termIndex        map[string]int
 }
 
 func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
@@ -28,9 +29,12 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 	lines := tmp[:len(tmp)-1]
 	termPostingLists := make([]tokenize.TermPostingList, len(lines))
 
+	termIndex := make(map[string]int)
+
 	for i, l := range lines {
 		termPostingList := tokenize.Unmarshal(l)
 		termPostingLists[i] = termPostingList
+		termIndex[termPostingList.Term] = i
 	}
 
 	tf := make([][]int, docsNum)
@@ -49,6 +53,7 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 		termsNum:         len(lines),
 		tf:               tf,
 		tfIdf:            tfIdf,
+		termIndex:        termIndex,
 	}
 }
 
@@ -90,7 +95,7 @@ func (v *Vectorizer) calculateTF() {
 func (v *Vectorizer) calculateTFIDF() {
 	for i := 0; i < v.docsNum; i++ {
 		for j := 0; j < v.termsNum; j++ {
-			v.tfIdf[i][j] = (1 + math.Log10(float64(v.tf[i][j]))) * v.idf[j]
+			v.tfIdf[i][j] = (math.Log10(1 + float64(v.tf[i][j]))) * v.idf[j]
 		}
 	}
 }
