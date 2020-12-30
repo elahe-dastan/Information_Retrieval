@@ -100,7 +100,7 @@ func sortBlock(termDocs []tokenize.TermPostingList) []tokenize.TermPostingList {
 	return termDocs
 }
 
-func (b *Bsbi) Merge() {
+func (b *Bsbi) Merge() string {
 	// all blocks
 	blocks, err := ioutil.ReadDir(b.blockDir + strconv.Itoa(b.mergeRun))
 	if err != nil {
@@ -109,16 +109,14 @@ func (b *Bsbi) Merge() {
 
 	for {
 		if len(blocks) == 1 {
-
-			return
+			return b.blockDir + strconv.Itoa(b.mergeRun)
 		}
 
 		if len(blocks) <= b.openFileNum {
 			b.middleMerge(blocks)
 			b.mergeRun++
 			b.block = 0
-			b.Merge()
-			return
+			return b.Merge()
 		}else {
 			b.middleMerge(blocks[:b.openFileNum])
 			blocks = blocks[b.openFileNum:]

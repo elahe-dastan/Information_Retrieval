@@ -23,7 +23,7 @@ func NewIndex(collectionDir string, memorySize int) *index {
 }
 
 // dir is document collection directory
-func (i *index) Construct() {
+func (i *index) Construct() string {
 	docs, err := ioutil.ReadDir(i.collectionDir)
 	if err != nil {
 		log.Fatal(err)
@@ -33,7 +33,7 @@ func (i *index) Construct() {
 		i.construct(d.Name())
 	}
 
-	i.sortAlgorithm.Merge()
+	return i.sortAlgorithm.Merge()
 }
 
 // construct index for one document
