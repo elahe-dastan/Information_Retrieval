@@ -109,7 +109,7 @@ func (b *Bsbi) Merge() string {
 
 	for {
 		if len(blocks) == 1 {
-			return b.blockDir + strconv.Itoa(b.mergeRun)
+			return b.blockDir + strconv.Itoa(b.mergeRun) + "/" + strconv.Itoa(b.block + 1)+".txt"
 		}
 
 		if len(blocks) <= b.openFileNum {

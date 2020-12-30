@@ -8,7 +8,8 @@ import (
 
 func main() {
 	i := index.NewIndex("./docs", 6)
-	fmt.Println(i.Construct())
+	indexFile := i.Construct()
+
 
 	fmt.Println(query.Query("نشست کمیسیون"))
 }
