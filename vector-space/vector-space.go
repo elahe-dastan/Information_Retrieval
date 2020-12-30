@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"strconv"
 	"strings"
 )
 
@@ -14,6 +15,7 @@ type Vectorizer struct {
 	docsNum          int
 	termsNum         int
 	idf              []float64
+	tf               [][]int
 }
 
 func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
@@ -31,10 +33,16 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 		termPostingLists[i] = termPostingList
 	}
 
+	tf := make([][]int, docsNum)
+	for i := 0; i < docsNum; i++{
+		tf[docsNum] = make([]int, len(lines))
+	}
+
 	return &Vectorizer{
 		termPostingLists: termPostingLists,
 		docsNum:          docsNum,
 		termsNum:         len(lines),
+		tf:               tf,
 	}
 }
 
@@ -56,10 +64,19 @@ func (v *Vectorizer) calculateIDF() {
 
 		v.idf[i] = math.Log10(float64(v.docsNum / count))
 	}
-
-	fmt.Println(v.idf)
 }
 
 func (v *Vectorizer) calculateTF() {
+	for i, t := range v.termPostingLists {
+		for j := 0; j < len(t.PostingList); j++ {
+			docId, err := strconv.Atoi(t.PostingList[j])
+			if err != nil {
+				log.Fatal(err)
+			}
 
+			v.tf[docId][i]++
+		}
+	}
+
+	fmt.Println(v.tf)
 }
