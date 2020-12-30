@@ -2,14 +2,13 @@ package main
 
 import (
 	"Information_Retrieval/index"
-	"Information_Retrieval/query"
-	"fmt"
+	vector_space "Information_Retrieval/vector-space"
 )
 
 func main() {
 	i := index.NewIndex("./docs", 6)
 	indexFile := i.Construct()
-
-
-	fmt.Println(query.Query("نشست کمیسیون"))
+	v := vector_space.NewVectorizer(indexFile, 3)
+	v.Vectorize()
+	//fmt.Println(query.Query("نشست کمیسیون"))
 }

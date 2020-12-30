@@ -1,22 +1,24 @@
 package vector_space
 
 import (
+	"Information_Retrieval/tokenize"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 )
 
 type Vectorizer struct {
 	indexPath string
 	docsNum   int
-	IDF       []float64
+	idf       []float64
 }
 
 func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 	return &Vectorizer{
 		indexPath: indexPath,
 		docsNum:   docsNum,
-		IDF:       make([]float64, docsNum),
+		idf:       nil,
 	}
 }
 
@@ -30,5 +32,12 @@ func (v *Vectorizer) calculateIDF() {
 		log.Fatal(err)
 	}
 
-	fmt.Print(string(dat))
+	lines := strings.Split(string(dat), "\n")
+	v.idf = make([]float64, len(lines))
+
+	for i, l := range lines{
+		termPostingList := tokenize.Unmarshal(l)
+		v.idf[i] = float64(len(termPostingList.PostingList))
+		fmt.Println(v.idf)
+	}
 }
