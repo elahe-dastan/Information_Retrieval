@@ -2,9 +2,9 @@ package vector_space
 
 import (
 	"Information_Retrieval/tokenize"
-	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"strings"
 )
 
@@ -24,6 +24,7 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 
 func (v *Vectorizer) Vectorize() {
 	v.calculateIDF()
+
 }
 
 func (v *Vectorizer) calculateIDF() {
@@ -33,11 +34,25 @@ func (v *Vectorizer) calculateIDF() {
 	}
 
 	lines := strings.Split(string(dat), "\n")
-	v.idf = make([]float64, len(lines))
+	v.idf = make([]float64, len(lines)-1)
 
 	for i, l := range lines{
+		if l == "" {
+			continue
+		}
+
 		termPostingList := tokenize.Unmarshal(l)
-		v.idf[i] = float64(len(termPostingList.PostingList))
-		fmt.Println(v.idf)
+		count := 1
+		for j := 1; j < len(termPostingList.PostingList); j++ {
+			if termPostingList.PostingList[j] != termPostingList.PostingList[j - 1]{
+				count++
+			}
+		}
+
+		v.idf[i] = math.Log10(float64(v.docsNum / count))
 	}
+}
+
+func (v *Vectorizer) calculateTF() {
+	
 }
