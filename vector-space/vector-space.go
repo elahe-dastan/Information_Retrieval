@@ -2,7 +2,6 @@ package vector_space
 
 import (
 	"Information_Retrieval/tokenize"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -16,6 +15,7 @@ type Vectorizer struct {
 	termsNum         int
 	idf              []float64
 	tf               [][]int
+	tfIdf            [][]float64
 }
 
 func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
@@ -34,8 +34,13 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 	}
 
 	tf := make([][]int, docsNum)
-	for i := 0; i < docsNum; i++{
-		tf[docsNum] = make([]int, len(lines))
+	for i := 0; i < docsNum; i++ {
+		tf[i] = make([]int, len(lines))
+	}
+
+	tfIdf := make([][]float64, docsNum)
+	for i := 0; i < docsNum; i++ {
+		tfIdf[i] = make([]float64, len(lines))
 	}
 
 	return &Vectorizer{
@@ -43,12 +48,14 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 		docsNum:          docsNum,
 		termsNum:         len(lines),
 		tf:               tf,
+		tfIdf:            tfIdf,
 	}
 }
 
 func (v *Vectorizer) Vectorize() {
 	v.calculateIDF()
-
+	v.calculateTF()
+	v.calculateTFIDF()
 }
 
 func (v *Vectorizer) calculateIDF() {
@@ -67,6 +74,7 @@ func (v *Vectorizer) calculateIDF() {
 }
 
 func (v *Vectorizer) calculateTF() {
+	// i expresses term index
 	for i, t := range v.termPostingLists {
 		for j := 0; j < len(t.PostingList); j++ {
 			docId, err := strconv.Atoi(t.PostingList[j])
@@ -74,9 +82,15 @@ func (v *Vectorizer) calculateTF() {
 				log.Fatal(err)
 			}
 
-			v.tf[docId][i]++
+			v.tf[docId-1][i]++
 		}
 	}
+}
 
-	fmt.Println(v.tf)
+func (v *Vectorizer) calculateTFIDF() {
+	for i := 0; i < v.docsNum; i++ {
+		for j := 0; j < v.termsNum; j++ {
+			v.tfIdf[i][j] = (1 + math.Log10(float64(v.tf[i][j]))) * v.idf[j]
+		}
+	}
 }
