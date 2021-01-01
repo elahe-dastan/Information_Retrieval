@@ -2,6 +2,8 @@ package vector_space
 
 import (
 	"Information_Retrieval/tokenize"
+	"container/heap"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -17,6 +19,7 @@ type Vectorizer struct {
 	tf               [][]int
 	tfIdf            [][]float64
 	termIndex        map[string]int
+	heap             *Heap
 }
 
 func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
@@ -47,6 +50,9 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 		tfIdf[i] = make([]float64, len(lines))
 	}
 
+	h := &Heap{}
+	heap.Init(h)
+
 	return &Vectorizer{
 		termPostingLists: termPostingLists,
 		docsNum:          docsNum,
@@ -54,6 +60,7 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 		tf:               tf,
 		tfIdf:            tfIdf,
 		termIndex:        termIndex,
+		heap:             h,
 	}
 }
 
@@ -101,16 +108,18 @@ func (v *Vectorizer) calculateTFIDF() {
 }
 
 func (v *Vectorizer) Query(query string) {
-	//queryVector := v.queryVectorizer(query)
+	queryVector := v.queryVectorizer(query)
+	v.cosineSimilarity(queryVector)
+	fmt.Println(v.heap)
 }
 
 func (v *Vectorizer) queryVectorizer(query string) []float64 {
 	vector := make([]float64, v.termsNum)
 
 	tokens := strings.Split(query, " ")
-	for _, t :=  range tokens{
+	for _, t := range tokens {
 		index, ok := v.termIndex[t]
-		if !ok{
+		if !ok {
 			continue
 		}
 		vector[index]++
@@ -121,20 +130,18 @@ func (v *Vectorizer) queryVectorizer(query string) []float64 {
 
 func (v *Vectorizer) cosineSimilarity(queryVector []float64) {
 	// query vector is not normalized and it's vector is just tf not tf-idf
-	maxSimilarity := float64(0)
-	//docId := 0
-	for _, doc := range v.tfIdf{
+	for docId, doc := range v.tfIdf {
 		innerProduct := float64(0)
 		norm := float64(0) // this is norm powered by two
-		for i, tfIdf := range doc{
+		for i, tfIdf := range doc {
 			innerProduct += tfIdf * queryVector[i]
 			norm += math.Pow(tfIdf, 2)
 		}
 		cos := innerProduct / math.Sqrt(norm)
-		if cos > maxSimilarity{
-			maxSimilarity = cos
-			//docId = doc
-		}
+		heap.Push(v.heap, Similarity{
+			DocId: docId + 1,
+			Cos:   cos,
+		})
 	}
 
 }
