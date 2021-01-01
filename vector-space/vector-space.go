@@ -101,7 +101,7 @@ func (v *Vectorizer) calculateTFIDF() {
 }
 
 func (v *Vectorizer) Query(query string) {
-	queryVector := v.queryVectorizer(query)
+	//queryVector := v.queryVectorizer(query)
 }
 
 func (v *Vectorizer) queryVectorizer(query string) []float64 {
@@ -120,5 +120,21 @@ func (v *Vectorizer) queryVectorizer(query string) []float64 {
 }
 
 func (v *Vectorizer) cosineSimilarity(queryVector []float64) {
-	
+	// query vector is not normalized and it's vector is just tf not tf-idf
+	maxSimilarity := float64(0)
+	//docId := 0
+	for _, doc := range v.tfIdf{
+		innerProduct := float64(0)
+		norm := float64(0) // this is norm powered by two
+		for i, tfIdf := range doc{
+			innerProduct += tfIdf * queryVector[i]
+			norm += math.Pow(tfIdf, 2)
+		}
+		cos := innerProduct / math.Sqrt(norm)
+		if cos > maxSimilarity{
+			maxSimilarity = cos
+			//docId = doc
+		}
+	}
+
 }
