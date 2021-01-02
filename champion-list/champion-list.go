@@ -57,14 +57,14 @@ func (c *champion) Create() {
 	for _, t := range c.termPostingLists {
 		frequencies := make([]frequency, 0)
 		previous := "0"
-		for _, docId := range t.PostingList{
+		for _, docId := range t.PostingList {
 			if docId != previous {
 				frequencies = append(frequencies, frequency{
 					docId: docId,
 					freq:  1,
 				})
 				previous = docId
-			}else {
+			} else {
 				p := frequencies[len(frequencies)-1]
 				p.freq++
 				frequencies[len(frequencies)-1] = p
@@ -79,3 +79,9 @@ func (c *champion) Create() {
 	//	log.Fatal(err)
 	//}
 }
+
+type Frequencies []frequency
+
+func (f Frequencies) Len() int           { return len(f) }
+func (f Frequencies) Less(i, j int) bool { return f[i].freq < f[j].freq }
+func (f Frequencies) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
