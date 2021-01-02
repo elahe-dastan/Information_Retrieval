@@ -9,12 +9,18 @@ import (
 	"strings"
 )
 
-type champion struct {
-	termPostingLists []tokenize.TermPostingList
-	championFile *os.File
+type frequency struct {
+	docId string
+	freq  int
 }
 
-func NewChampion(indexFile string) *champion {
+type champion struct {
+	termPostingLists []tokenize.TermPostingList
+	championFile     *os.File
+	k                int
+}
+
+func NewChampion(indexFile string, k int) *champion {
 	dat, err := ioutil.ReadFile(indexFile)
 	if err != nil {
 		log.Fatal(err)
@@ -40,15 +46,36 @@ func NewChampion(indexFile string) *champion {
 		log.Fatal(err)
 	}
 
-	fmt.Println(termPostingLists)
-
 	return &champion{
 		termPostingLists: termPostingLists,
-		championFile: o,
+		championFile:     o,
+		k:                k,
 	}
 }
 
-func Create(indexFile string) {
+func (c *champion) Create() {
+	for _, t := range c.termPostingLists {
+		frequencies := make([]frequency, 0)
+		previous := "0"
+		for _, docId := range t.PostingList{
+			if docId != previous {
+				frequencies = append(frequencies, frequency{
+					docId: docId,
+					freq:  1,
+				})
+				previous = docId
+			}else {
+				p := frequencies[len(frequencies)-1]
+				p.freq++
+				frequencies[len(frequencies)-1] = p
+			}
+		}
+		fmt.Println(frequencies)
+	}
 	//h := &Heap{}
 	//heap.Init(h)
+	//_, err = o.WriteString(sortedBlockStr)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 }
