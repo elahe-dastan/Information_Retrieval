@@ -5,51 +5,74 @@ import (
 	"Information_Retrieval/normalize"
 	"Information_Retrieval/tokenize"
 	"bufio"
-	"io/ioutil"
+	"context"
+	"fmt"
+	"github.com/minio/minio-go"
 	"log"
 	"os"
 	"strconv"
 )
 
 type index struct {
-	collectionDir string
+	minioClient   *minio.Client
 	memorySize    int
 	docId         int
 	sortAlgorithm *bsbi.Bsbi
 }
 
-func NewIndex(collectionDir string, memorySize int) *index {
-	return &index{collectionDir: collectionDir, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi(10, memorySize)}
+func NewIndex(minioClient *minio.Client, memorySize int) *index {
+	return &index{minioClient: minioClient, memorySize: memorySize, docId: 0, sortAlgorithm: bsbi.NewBsbi(10, memorySize)}
 }
 
 // dir is document collection directory
-func (i *index) Construct() string {
-	docs, err := ioutil.ReadDir(i.collectionDir)
+func (i *index) Construct() {
+	found, err := i.minioClient.BucketExists(context.Background(), "information-retrieval")
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	for _, d := range docs {
-		i.construct(d.Name())
+	if !found {
+		log.Fatal("information-retrieval bucket not found")
 	}
 
-	return i.sortAlgorithm.Merge()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	defer cancel()
+
+	objectCh := i.minioClient.ListObjects(ctx, "information-retrieval", minio.ListObjectsOptions{})
+	for object := range objectCh {
+		if object.Err != nil {
+			log.Fatal(object.Err)
+		}
+		fmt.Println(object.Size)
+	}
+
+
+	//docs, err := ioutil.ReadDir(i.minioClient)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//for _, d := range docs {
+	//	i.construct(d.Name())
+	//}
+	//
+	//return i.sortAlgorithm.Merge()
 }
 
 // construct index for one document
 func (i *index) construct(docName string) {
-	i.docId++
-
-	docDir := i.collectionDir + "/" + docName
-
-	f, err := os.Open(docDir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer f.Close()
-
-	i.tokenizeSortBlock(f)
+	//i.docId++
+	//
+	//docDir := i.minioClient + "/" + docName
+	//
+	//f, err := os.Open(docDir)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//defer f.Close()
+	//
+	//i.tokenizeSortBlock(f)
 }
 
 func (i *index) tokenizeSortBlock(f *os.File) {
