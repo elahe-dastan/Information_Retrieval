@@ -1,6 +1,7 @@
 package vector_space
 
 import (
+	heap2 "Information_Retrieval/heap"
 	"Information_Retrieval/tokenize"
 	"container/heap"
 	"fmt"
@@ -19,7 +20,7 @@ type Vectorizer struct {
 	tf               [][]int
 	tfIdf            [][]float64
 	termIndex        map[string]int
-	heap             *Heap
+	heap             *heap2.SimilarityHeap
 }
 
 func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
@@ -50,7 +51,7 @@ func NewVectorizer(indexPath string, docsNum int) *Vectorizer {
 		tfIdf[i] = make([]float64, len(lines))
 	}
 
-	h := &Heap{}
+	h := &heap2.SimilarityHeap{}
 	heap.Init(h)
 
 	return &Vectorizer{
@@ -138,7 +139,7 @@ func (v *Vectorizer) cosineSimilarity(queryVector []float64) {
 			norm += math.Pow(tfIdf, 2)
 		}
 		cos := innerProduct / math.Sqrt(norm)
-		heap.Push(v.heap, Similarity{
+		heap.Push(v.heap, heap2.Similarity{
 			DocId: docId + 1,
 			Cos:   cos,
 		})

@@ -1,18 +1,15 @@
 package champion_list
 
 import (
+	heap2 "Information_Retrieval/heap"
 	"Information_Retrieval/tokenize"
-	"fmt"
+	"container/heap"
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
-
-type frequency struct {
-	docId string
-	freq  int
-}
 
 type champion struct {
 	termPostingLists []tokenize.TermPostingList
@@ -55,33 +52,37 @@ func NewChampion(indexFile string, k int) *champion {
 
 func (c *champion) Create() {
 	for _, t := range c.termPostingLists {
-		frequencies := make([]frequency, 0)
+		frequencies := make([]heap2.Frequency, 0)
 		previous := "0"
 		for _, docId := range t.PostingList {
 			if docId != previous {
-				frequencies = append(frequencies, frequency{
-					docId: docId,
-					freq:  1,
+				frequencies = append(frequencies, heap2.Frequency{
+					DocId: docId,
+					Freq:  1,
 				})
 				previous = docId
 			} else {
 				p := frequencies[len(frequencies)-1]
-				p.freq++
+				p.Freq++
 				frequencies[len(frequencies)-1] = p
 			}
 		}
-		fmt.Println(frequencies)
+
+		h := &heap2.FrequencyHeap{}
+		heap.Init(h)
+		for _, f := range frequencies{
+			heap.Push(h, f)
+		}
+
+		output := ""
+		for i := 0; i < c.k; i++ {
+			championEntry := heap.Pop(h).(heap2.Frequency)
+			output += championEntry.DocId + "-" + strconv.Itoa(championEntry.Freq) + " "
+		}
+
+		_, err := c.championFile.WriteString(strings.Trim(output, " ") + "\n")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	//h := &Heap{}
-	//heap.Init(h)
-	//_, err = o.WriteString(sortedBlockStr)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 }
-
-type Frequencies []frequency
-
-func (f Frequencies) Len() int           { return len(f) }
-func (f Frequencies) Less(i, j int) bool { return f[i].freq < f[j].freq }
-func (f Frequencies) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
