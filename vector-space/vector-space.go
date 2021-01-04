@@ -129,6 +129,7 @@ func (v *Vectorizer) queryVectorizer(query string) []float64 {
 	return vector
 }
 
+// read only the docs in the posting list -- first read only the docs in the champion list
 func (v *Vectorizer) cosineSimilarity(queryVector []float64) {
 	// query vector is not normalized and it's vector is just tf not tf-idf
 	for docId, doc := range v.tfIdf {
