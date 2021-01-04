@@ -33,3 +33,10 @@ cause I don't have enough memory so I use BSBI algorithm
 ####  prepare documents
 
 # the memory is 160 bytes
+
+## Run
+1. run minio as object storage 
+```sh 
+docker compose up -d
+```
+2. go to [https://127.0.0.1:9000](https://127.0.0.1:9000) and upload your documents

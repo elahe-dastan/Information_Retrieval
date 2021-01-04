@@ -5,8 +5,9 @@ services:
     image: minio/minio
     environment:
       - MINIO_ACCESS_KEY=parham
-      - MINIO_SECRET_KEY=parham
+      - MINIO_SECRET_KEY=parham1373
     ports:
     - 9000:9000
     volumes:
-    -
+    - /mnt/data:/data
+    command: server /data
