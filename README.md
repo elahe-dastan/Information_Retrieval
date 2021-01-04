@@ -1,8 +1,19 @@
 # Information_Retrieval
 
-This is my information retrieval course project probably you don't need the whole project (if you don't have the course
-in amirkabir next semesters :wink: but the ideas and algorithms can be used in different situations and I try to explain
-them here.
+You probably never ever need to build a search engine from the scratch unless you have information retrieval course :joy:
+but cause open source is sacred here is my project, my design and algorithms explanation.
+
+## Black Box 
+Let's have high-level view, the service has a bunch of documents, a user types a query and hit enter, our service should
+return the docs which are mostly related to the query. The picture below shows a complete search engine which I have implemented
+a few components from
+
+![](images/black_box.png)
+
+## Where to store the documents
+First things first, you have a huge number of documents in a real situation, storing them efficiently is a challenge itself.
+I suggest using an object storage. Take a look at [https://min.io/](https://min.io/)
+
 
 ## Memory Shortage
 This problem is the most important thing I'd like to solve in this project cause if we have as much memory as we like indexing
