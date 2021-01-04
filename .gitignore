@@ -28,4 +28,6 @@
 ### binary
 urlShortener_KGS
 
+docs/.minio.sys
+
 # End of https://www.gitignore.io/api/go

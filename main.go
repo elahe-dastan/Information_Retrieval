@@ -1,6 +1,9 @@
 package main
 
-import champion_list "Information_Retrieval/champion-list"
+import (
+	"Information_Retrieval/storage"
+	"log"
+)
 
 func main() {
 	//i := index.NewIndex("./p_docs", 6)
@@ -9,8 +12,9 @@ func main() {
 	//v.Vectorize()
 	//v.Query("نشست کمیسیون")
 
-	c := champion_list.NewChampion("./blocks2/1.txt", 1)
-	c.Create()
+	//c := championlist.NewChampion("./blocks2/1.txt", 1)
+	//c.Create()
 
+	log.Printf("%#v\n", storage.NewMinioConnection()) // minioClient is now setup
 	//fmt.Println(query.Query())
 }
