@@ -7,8 +7,8 @@ import (
 
 func main() {
 	minioClient := storage.NewMinioConnection() // minioClient is now setup
-	_ = index.NewIndex(minioClient, 6)
-	//indexFile := i.Construct()
+	i := index.NewIndex(minioClient, 6)
+	i.Construct()
 	//v := vector_space.NewVectorizer(indexFile, 3)
 	//v.Vectorize()
 	//v.Query("نشست کمیسیون")

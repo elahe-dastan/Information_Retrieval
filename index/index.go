@@ -7,7 +7,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/minio/minio-go"
+	"github.com/minio/minio-go/v7"
 	"log"
 	"os"
 	"strconv"
@@ -26,7 +26,7 @@ func NewIndex(minioClient *minio.Client, memorySize int) *index {
 
 // dir is document collection directory
 func (i *index) Construct() {
-	found, err := i.minioClient.BucketExists(context.Background(), "information-retrieval")
+	found, err := i.minioClient.BucketExists(context.Background(),"information-retrieval")
 	if err != nil {
 		log.Fatal(err)
 	}

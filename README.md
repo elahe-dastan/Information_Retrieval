@@ -12,7 +12,7 @@ a few components from
 
 ## Where to store the documents
 First things first, you have a huge number of documents in a real situation, storing them efficiently is a challenge itself.
-I suggest using an object storage. Take a look at [https://min.io/](https://min.io/)
+I suggest using an object storage. Take a look at [https://min.io/](https://min.io/).
 
 
 ## Memory Shortage
@@ -40,3 +40,4 @@ cause I don't have enough memory so I use BSBI algorithm
 docker compose up -d
 ```
 2. go to [https://127.0.0.1:9000](https://127.0.0.1:9000) and upload your documents
+
